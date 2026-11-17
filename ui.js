@@ -1,4 +1,4 @@
-/* 自然健体 · 电子教练 — 交互层 */
+﻿/* 自然健体 · 电子教练 — 交互层 */
 (function () {
   'use strict';
   var C = window.Coach;
@@ -33,8 +33,13 @@
     var th = localStorage.getItem(LS.theme); if (th) document.documentElement.setAttribute('data-theme', th);
     try {
       var sc = JSON.parse(localStorage.getItem(LS.sync) || '{}');
-      Object.keys(sc).forEach(function (k) { if (k in S.sync) S.sync[k] = sc[k]; });
+      Object.keys(sc).forEach(function (k) { if (k in S.sync || k === 'off') S.sync[k] = sc[k]; });
     } catch (e) { }
+    // 部署时内置的备份（只含 Gist ID，不含密钥）
+    if (window.SYNC_CFG && window.SYNC_CFG.gist && !S.sync.off) {
+      if (!S.sync.gist) S.sync.gist = window.SYNC_CFG.gist;
+      if (S.sync.auto !== false) S.sync.auto = true;
+    }
     if (!S.chartEx) { var m = S.cfg.exercises.filter(function (e) { return e.star && e.mode === 'load'; })[0]; S.chartEx = m ? m.id : (S.cfg.exercises[0] || {}).id; }
   }
   function save() {
@@ -50,7 +55,7 @@
 
   /* ================= 云同步 ================= */
   function saveSync() {
-    localStorage.setItem(LS.sync, JSON.stringify({ token: S.sync.token, gist: S.sync.gist, auto: S.sync.auto, lastAt: S.sync.lastAt }));
+    localStorage.setItem(LS.sync, JSON.stringify({ token: S.sync.token, gist: S.sync.gist, auto: S.sync.auto, lastAt: S.sync.lastAt, off: !!S.sync.off }));
   }
   function hhmm(ts) {
     var d = new Date(ts || Date.now());
@@ -118,7 +123,7 @@
     });
   }
   function syncNow() {
-    if (!S.sync.token) return toast('先填 GitHub Token');
+    if (!S.sync.token) { pairSheet(); return; }
     if (!S.sync.gist) return syncCreate();
     syncPull().then(function () { return syncPush(); });
   }
@@ -135,6 +140,27 @@
       S.sync.busy = false;
       syncStatus('创建失败：' + window.Sync.errorText(e));
     });
+  }
+
+  function pairSheet() {
+    openSheet('<div class="sheet-h"><div class="sheet-t">配对同步</div><button class="btn sm ghost" data-act="close-sheet">关闭</button></div>' +
+      '<div class="small muted">把电脑上生成的「同步码」整段粘进来，只需一次。之后打开自动拉取、改动后自动上传。</div>' +
+      '<textarea id="pairCode" rows="4" style="margin-top:8px;font-family:ui-monospace,Menlo,monospace;font-size:11px" placeholder="ghp_...|4f1a2b3c"></textarea>' +
+      '<div class="spacer"></div><button class="btn primary block" data-act="pair-run">配对</button>');
+  }
+  function applyPair(raw) {
+    var v = String(raw || '').trim();
+    var m = /pair=([^&\s]+)/.exec(v);
+    if (m) { try { v = decodeURIComponent(m[1]); } catch (e) { } }
+    var parts = v.split('|');
+    if (parts.length < 2 || !parts[0].trim() || !parts[1].trim()) { toast('同步码格式不对'); return false; }
+    S.sync.token = parts[0].trim();
+    S.sync.gist = parts[1].trim();
+    S.sync.auto = true; S.sync.off = false; S.sync.status = '已配对';
+    saveSync(); closeSheet(); render();
+    toast('已配对，正在同步…');
+    setTimeout(function () { syncNow(); }, 300);
+    return true;
   }
 
   /* ================= 工具 ================= */
@@ -745,18 +771,30 @@
     html += '</div></details>';
 
     // 云同步
-    html += '<details class="block"><summary>云同步（GitHub Gist）</summary><div class="body">' +
-      '<div class="small muted">两台设备填同一个 Token 与 Gist ID，打开时自动拉取、改动后自动上传；打卡按日期合并，重量状态取更新的一份。</div>' +
-      '<label class="field" style="margin-top:8px"><span>GitHub Token（classic，只勾 gist）</span>' +
-      '<input type="password" data-sync="token" value="' + esc(S.sync.token || '') + '" placeholder="ghp_..." autocomplete="off"></label>' +
-      '<label class="field" style="margin-top:8px"><span>Gist ID（留空点「创建备份」自动生成）</span>' +
-      '<input data-sync="gist" value="' + esc(S.sync.gist || '') + '" placeholder="例如 4f1a2b3c..."></label>' +
-      '<label class="switch small" style="margin-top:8px"><input type="checkbox" data-sync="auto"' + (S.sync.auto ? ' checked' : '') + '>自动同步（启动拉取 / 改动后上传）</label>' +
-      '<div class="wrap" style="margin-top:8px"><button class="btn sm" data-act="sync-now">立即双向同步</button>' +
-      '<button class="btn sm ghost" data-act="sync-create">创建备份</button>' +
-      '<button class="btn sm ghost danger" data-act="sync-off">断开</button></div>' +
-      '<div class="tiny muted" id="syncStatus" style="margin-top:6px">' + esc(S.sync.status || (syncConfigured() ? '已配置' : '未配置')) + '</div>' +
-      '<div class="tiny muted" style="margin-top:6px">没有 Token？<a href="https://github.com/settings/tokens/new?scopes=gist&description=coach" target="_blank" rel="noopener" style="color:var(--accent)">点这里生成</a>（只勾 gist，别的都不要）。Token 只存在本机浏览器，不会写进备份文件。</div>' +
+    var presetGist = (window.SYNC_CFG && window.SYNC_CFG.gist) || '';
+    var paired = !!(S.sync.token && S.sync.gist);
+    html += '<details class="block"><summary>云同步' + (presetGist ? '（已内置）' : '（GitHub Gist）') + '</summary><div class="body">';
+    if (presetGist) {
+      html += '<div class="small muted">' + (paired
+        ? '这台设备已配对：打开时自动拉取，改动后自动上传。'
+        : '这台设备还没配对：点「配对」，把电脑上生成的同步码粘进来（一次即可）。') + '</div>' +
+        '<div class="wrap" style="margin-top:8px">' +
+        '<button class="btn sm" data-act="sync-now">立即同步</button>' +
+        (paired ? '<button class="btn sm ghost" data-act="pair-open">重新配对</button>' : '<button class="btn sm accent" data-act="pair-open">配对</button>') +
+        '<button class="btn sm ghost danger" data-act="sync-off">断开</button></div>';
+    } else {
+      html += '<div class="small muted">两台设备填同一个 Token 与 Gist ID，打开时自动拉取、改动后自动上传；打卡按日期合并，重量状态取更新的一份。</div>' +
+        '<label class="field" style="margin-top:8px"><span>GitHub Token（classic，只勾 gist）</span>' +
+        '<input type="password" data-sync="token" value="' + esc(S.sync.token || '') + '" placeholder="ghp_..." autocomplete="off"></label>' +
+        '<label class="field" style="margin-top:8px"><span>Gist ID（留空点「创建备份」自动生成）</span>' +
+        '<input data-sync="gist" value="' + esc(S.sync.gist || '') + '" placeholder="例如 4f1a2b3c..."></label>' +
+        '<label class="switch small" style="margin-top:8px"><input type="checkbox" data-sync="auto"' + (S.sync.auto ? ' checked' : '') + '>自动同步（启动拉取 / 改动后上传）</label>' +
+        '<div class="wrap" style="margin-top:8px"><button class="btn sm" data-act="sync-now">立即双向同步</button>' +
+        '<button class="btn sm ghost" data-act="sync-create">创建备份</button>' +
+        '<button class="btn sm ghost danger" data-act="sync-off">断开</button></div>' +
+        '<div class="tiny muted" style="margin-top:6px">没有 Token？<a href="https://github.com/settings/tokens/new?scopes=gist&description=coach" target="_blank" rel="noopener" style="color:var(--accent)">点这里生成</a>（只勾 gist，别的都不要）。Token 只存在本机浏览器，不会写进备份文件。</div>';
+    }
+    html += '<div class="tiny muted" id="syncStatus" style="margin-top:6px">' + esc(S.sync.status || (paired ? '已配置' : '未配置')) + '</div>' +
       '</div></details>';
 
     // 数据
@@ -1017,9 +1055,12 @@
     if (act === 'export-file') { download('备赛备份-' + date + '.json', JSON.stringify(C.exportPayload(S.cfg, S.db), null, 1)); toast('已导出文件'); return; }
     if (act === 'sync-now') { syncNow(); return; }
     if (act === 'sync-create') { syncCreate(); return; }
+    if (act === 'pair-open') { pairSheet(); return; }
+    if (act === 'pair-run') { applyPair(el('pairCode').value); return; }
     if (act === 'sync-off') {
-      if (!confirm('断开云同步？本机数据不动，只清除 Token 与 Gist ID。')) return;
-      S.sync.token = ''; S.sync.gist = ''; S.sync.status = '已断开'; saveSync(); render(); return;
+      if (!confirm('断开云同步？本机数据不动，只清除配对信息。')) return;
+      S.sync.token = ''; S.sync.gist = ''; S.sync.off = true; S.sync.status = '已断开';
+      saveSync(); render(); return;
     }
     if (act === 'export-copy') { copyText(JSON.stringify(C.exportPayload(S.cfg, S.db), null, 1)); return; }
     if (act === 'import-file') { el('fileInput').click(); return; }
@@ -1145,6 +1186,16 @@
   var hash = (location.hash || '').replace('#', '');
   if (PAGES[hash]) S.tab = hash;
   render();
+  // 一次性配对链接：#pair=<token|gist>
+  if (/pair=/.test(location.hash || '')) {
+    var pm = /pair=([^&]+)/.exec(location.hash);
+    if (pm) {
+      var ok = false;
+      try { ok = applyPair(decodeURIComponent(pm[1])); } catch (e) { ok = applyPair(pm[1]); }
+      try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { }
+      if (ok) S.tab = 'home';
+    }
+  }
   if (S.sync.token && S.sync.gist && S.sync.auto) setTimeout(function () { syncPull(true); }, 900);
   window.__coach = { S: S, C: C, render: render, save: save, go: go };
   if (location.search.indexOf('debug') >= 0) {
