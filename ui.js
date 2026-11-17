@@ -1,4 +1,4 @@
-﻿/* 自然健体 · 电子教练 — 交互层 */
+/* 自然健体 · 电子教练 — 交互层 */
 (function () {
   'use strict';
   var C = window.Coach;
@@ -784,6 +784,10 @@
         '<button class="btn sm ghost danger" data-act="sync-off">断开</button></div>';
     } else {
       html += '<div class="small muted">两台设备填同一个 Token 与 Gist ID，打开时自动拉取、改动后自动上传；打卡按日期合并，重量状态取更新的一份。</div>' +
+        (location.protocol === 'file:' ? '<div class="tiny muted" style="margin-top:6px">当前是「本机文件」模式：想免配置自动同步，请改用正式网址。</div>' : '') +
+        '<div class="alert info" style="margin-top:8px"><span class="dot"></span><div><div class="t">这两个是什么？</div>' +
+        '<div class="x"><b>Token</b>：一把只能读写你私有备份的钥匙（GitHub 生成，可随时撤销，不是账号密码）。<br>' +
+        '<b>Gist ID</b>：云端备份文件的编号。第一次留空，点「创建备份」会自动生成；另一台设备填同一个编号，才会看到同一份数据。</div></div></div>' +
         '<label class="field" style="margin-top:8px"><span>GitHub Token（classic，只勾 gist）</span>' +
         '<input type="password" data-sync="token" value="' + esc(S.sync.token || '') + '" placeholder="ghp_..." autocomplete="off"></label>' +
         '<label class="field" style="margin-top:8px"><span>Gist ID（留空点「创建备份」自动生成）</span>' +
@@ -791,6 +795,7 @@
         '<label class="switch small" style="margin-top:8px"><input type="checkbox" data-sync="auto"' + (S.sync.auto ? ' checked' : '') + '>自动同步（启动拉取 / 改动后上传）</label>' +
         '<div class="wrap" style="margin-top:8px"><button class="btn sm" data-act="sync-now">立即双向同步</button>' +
         '<button class="btn sm ghost" data-act="sync-create">创建备份</button>' +
+        '<button class="btn sm ghost" data-act="pair-open">用配对码</button>' +
         '<button class="btn sm ghost danger" data-act="sync-off">断开</button></div>' +
         '<div class="tiny muted" style="margin-top:6px">没有 Token？<a href="https://github.com/settings/tokens/new?scopes=gist&description=coach" target="_blank" rel="noopener" style="color:var(--accent)">点这里生成</a>（只勾 gist，别的都不要）。Token 只存在本机浏览器，不会写进备份文件。</div>';
     }
