@@ -2,9 +2,9 @@
  * 安装时只预缓存 6 个关键文件并带 20s 超时（弱网/隧道下不会卡死），其余靠运行时缓存。
  * 只在 https 或 localhost 下注册（见 ui.js），file:// 打开时不会启用。
  */
-var CACHE = 'coach-v4';
+var CACHE = 'coach-v5';
 var ASSETS = [
-  './index.html', './styles.css', './core.js', './sync.js', './ui.js', './seed.js', './manifest.webmanifest'
+  './index.html', './styles.css', './core.js', './sync.js', './sync-config.js', './ui.js', './seed.js', './manifest.webmanifest'
 ];
 var TIMEOUT = 20000;
 
