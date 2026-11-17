@@ -1,0 +1,54 @@
+﻿<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#f5f6f8" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0a0b0d" media="(prefers-color-scheme: dark)" />
+<meta name="description" content="自然健体备赛：训练处方、选项式打卡、教练建议与数据分析" />
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="电子教练" />
+<title>自然健体 · 电子教练</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="mark">N</span>
+      <div>
+        <div class="brand-title">电子教练</div>
+        <div class="brand-sub" id="topDate">—</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" data-act="copy-rx" title="复制今日处方">复制处方</button>
+      <button class="icon-btn" data-act="theme" id="themeBtn" title="切换深浅色">◐</button>
+    </div>
+  </header>
+
+  <main id="view" class="view"></main>
+
+  <nav class="tabs" id="tabs">
+    <button data-act="nav" data-tab="home"><i>◎</i><span>今日</span></button>
+    <button data-act="nav" data-tab="checkin"><i>✎</i><span>打卡</span></button>
+    <button data-act="nav" data-tab="engine"><i>⚙</i><span>引擎</span></button>
+    <button data-act="nav" data-tab="analysis"><i>◔</i><span>分析</span></button>
+    <button data-act="nav" data-tab="settings"><i>☰</i><span>配置</span></button>
+    <button data-act="nav" data-tab="manual"><i>▤</i><span>手册</span></button>
+  </nav>
+
+  <div id="sheet" class="sheet-wrap" hidden></div>
+  <div id="toast" class="toast" hidden></div>
+  <div id="timerPill" class="timer-pill" hidden></div>
+  <input id="fileInput" type="file" accept="application/json,.json" hidden />
+
+  <script src="seed.js"></script>
+  <script src="core.js"></script>
+  <script src="sync.js"></script>
+  <script src="ui.js"></script>
+</body>
+</html>

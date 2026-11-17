@@ -1,0 +1,21 @@
+{
+  "id": "./",
+  "name": "自然健体 · 电子教练",
+  "short_name": "电子教练",
+  "description": "备赛训练处方、选项式打卡、教练建议与数据分析",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#f4f5f7",
+  "theme_color": "#14181d",
+  "categories": ["health", "fitness", "productivity"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
