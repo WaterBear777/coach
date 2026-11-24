@@ -164,9 +164,11 @@
     var after = before;
     var reason = '';
 
-    if (item.w != null && !isNaN(item.w) && ex.mode === 'load') {
+    // 只有非减载、且实际重量与「当天处方重量」不同，才视为校准
+    // 注意：减载日的处方重量 = 基线×系数，绝不能写回基线
+    if (!deload && item.w != null && !isNaN(item.w) && ex.mode !== 'untracked' && pres.weight != null) {
       var actual = Number(item.w);
-      if (pres.base != null && Math.abs(actual - pres.base) > 0.001) { after = actual; reason = '按实际重量校准'; }
+      if (Math.abs(actual - pres.weight) > 0.001) { after = actual; reason = '按实际重量校准'; }
     }
     if (!deload && ex.mode !== 'untracked') {
       var inc = Number(ex.inc) || 0;
@@ -538,6 +540,35 @@
     return out.join('\n');
   }
 
+  /* ---------- 修复：减载期间被写坏的基线 ---------- */
+  // 旧版本 bug：减载日打卡时把「减载重量」当实际重量校准写回了 base。
+  // 判定：日志末尾是一段减载记录，且当前基线低于减载前的重量 → 回补到减载前。
+  // 已经练回去（基线 ≥ 减载前）的不动。
+  function findDeloadRepairs(cfg, db) {
+    var out = [];
+    cfg.exercises.forEach(function (ex) {
+      var st = db.states[ex.id];
+      if (!st || !st.log || !st.log.length || st.base == null) return;
+      var i = st.log.length - 1;
+      while (i >= 0 && st.log[i].deload) i--;
+      if (i === st.log.length - 1) return;
+      var prev = i >= 0 ? st.log[i] : null;
+      var pre = (prev && prev.w != null) ? prev.w : (ex.mode === 'bodyweight' ? 0 : ex.w);
+      if (pre == null) return;
+      if (st.base >= pre - 0.001) return;
+      out.push({ id: ex.id, name: ex.name, base: st.base, restore: pre });
+    });
+    return out;
+  }
+
+  function applyDeloadRepairs(cfg, db) {
+    var list = findDeloadRepairs(cfg, db);
+    if (!list.length) return { db: db, list: list };
+    var states = Object.assign({}, db.states);
+    list.forEach(function (r) { states[r.id] = Object.assign({}, states[r.id], { base: r.restore }); });
+    return { db: Object.assign({}, db, { states: states }), list: list };
+  }
+
   /* ---------- 双设备合并（云同步用） ---------- */
   function lastLogDate(st) {
     if (!st || !st.log || !st.log.length) return '';
@@ -697,7 +728,7 @@
     expectedKinds: expectedKinds, doneKinds: doneKinds, recordMap: recordMap,
     bodySeries: bodySeries, movingAvg: movingAvg, weeklyAvg: weeklyAvg,
     stats: stats, alerts: alerts, tips: tips, weekReport: weekReport, rxText: rxText,
-    lastLogDate: lastLogDate, mergeDb: mergeDb,
+    lastLogDate: lastLogDate, mergeDb: mergeDb, findDeloadRepairs: findDeloadRepairs, applyDeloadRepairs: applyDeloadRepairs,
     migrateLegacy: migrateLegacy, exportPayload: exportPayload, importPayload: importPayload
   };
   G.Coach = api;
