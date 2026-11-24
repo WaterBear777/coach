@@ -41,6 +41,9 @@
       if (S.sync.auto !== false) S.sync.auto = true;
     }
     if (!S.chartEx) { var m = S.cfg.exercises.filter(function (e) { return e.star && e.mode === 'load'; })[0]; S.chartEx = m ? m.id : (S.cfg.exercises[0] || {}).id; }
+    // 修复旧版本 bug：减载日把减载重量写进了基线
+    var rep = C.applyDeloadRepairs(S.cfg, S.db);
+    if (rep.list.length) { S.db = rep.db; S.repairNotice = rep.list.length; }
   }
   function save() {
     try {
@@ -1202,6 +1205,10 @@
     }
   }
   if (S.sync.token && S.sync.gist && S.sync.auto) setTimeout(function () { syncPull(true); }, 900);
+  if (S.repairNotice) {
+    save();
+    setTimeout(function () { toast('已修复 ' + S.repairNotice + ' 个动作被减载写坏的基线', 4200); }, 1100);
+  }
   window.__coach = { S: S, C: C, render: render, save: save, go: go };
   if (location.search.indexOf('debug') >= 0) {
     document.title = 'vw=' + window.innerWidth + ' sw=' + document.documentElement.scrollWidth + ' bw=' + document.body.scrollWidth;
