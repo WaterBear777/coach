@@ -1,4 +1,4 @@
-/* 自然健体 · 电子教练 — 交互层 */
+﻿/* 自然健体 · 电子教练 — 交互层 */
 (function () {
   'use strict';
   var C = window.Coach;
@@ -453,7 +453,7 @@
       html += submitBtn('posing', '保存造型');
     } else if (kind === 'training') {
       var exs = day ? C.planExercises(S.cfg, day.id) : [];
-      html += '<div class="wrap" style="margin-bottom:6px"><button class="btn sm ghost" data-act="fill-all" data-val="done">全部完成（未到hi）</button>' +
+      html += '<div class="wrap" style="margin-bottom:6px"><button class="btn sm ghost" data-act="fill-all" data-val="done">全部完成（未到上限）</button>' +
         '<button class="btn sm ghost" data-act="clear-all">清空</button><span class="badge line" id="trCount">0/' + exs.length + '</span>' +
         '<span class="tiny muted">最后一组到上限（RPE≤9）即摸顶</span></div>';
       exs.forEach(function (ex) {
