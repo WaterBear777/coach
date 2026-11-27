@@ -7,7 +7,7 @@
 
   /* ---------- 常量 ---------- */
   var RESULT = {
-    hit:   { id: 'hit',   label: '最后一组到上限（RPE≤9）', short: '摸顶', tone: 'ok' },
+    hit:   { id: 'hit',   label: '最后一组到上限', short: '摸顶', tone: 'ok' },
     done:  { id: 'done',  label: '完成（未到上限）',     short: '完成', tone: 'mid' },
     heavy: { id: 'heavy', label: '没完成-太重',         short: '太重', tone: 'bad' },
     sets:  { id: 'sets',  label: '没完成-组数做完',     short: '组数', tone: 'bad' },
