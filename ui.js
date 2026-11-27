@@ -319,7 +319,7 @@
     // 处方
     if (day) {
       html += '<div class="card"><div class="card-h"><div><div class="card-t">今日处方</div><div class="card-sub">' +
-        (deload ? '减载：组数减半、重量 ×' + S.cfg.rules.deloadFactor : '纯双进阶 · 全组摸 hi 下次加重') + '</div></div>' +
+        (deload ? '减载：组数减半、重量 ×' + S.cfg.rules.deloadFactor : '纯双进阶 · 最后一组到上限就加重') + '</div></div>' +
         '<button class="btn sm ghost" data-act="copy-rx">复制</button></div>';
       exs.forEach(function (ex) {
         var r = C.rx(S.cfg, S.db, ex, date);
@@ -468,12 +468,11 @@
           ['hit', 'done', 'heavy', 'sets', 'body'].map(function (k) {
             return '<button type="button" class="chip sm ' + (it.result === k ? 'on ' + toneOf(k) : '') + '" data-act="pick" data-kind="training" data-ex="' + ex.id + '" data-val="' + k + '">' + C.RESULT[k].label + '</button>';
           }).join('') + '</div>' +
-          '<details style="margin-top:6px"><summary class="tiny muted" style="cursor:pointer">实际重量 / 最好组次数（可选）</summary>' +
           '<div class="field-row" style="margin-top:6px">' +
-          '<label class="field"><span>重量' + (ex.mode === 'bodyweight' ? '（负重，0=自重）' : ex.mode === 'untracked' ? '（不计重）' : '') + '</span>' +
+          '<label class="field"><span>实际重量' + (ex.mode === 'bodyweight' ? '（负重，0=自重）' : ex.mode === 'untracked' ? '（不计重）' : '') + '</span>' +
           '<input type="number" step="0.5" data-act="num" data-kind="trw" data-ex="' + ex.id + '" value="' + (it.w != null ? it.w : '') + '"' + (ex.mode === 'untracked' ? ' disabled' : '') + '></label>' +
-          '<label class="field"><span>最好组次数</span><input type="number" step="1" data-act="num" data-kind="trr" data-ex="' + ex.id + '" value="' + (it.reps != null ? it.reps : '') + '" placeholder="自动"></label>' +
-          '</div></details></div>';
+          '<label class="field"><span>最后一组次数</span><input type="number" step="1" data-act="num" data-kind="trr" data-ex="' + ex.id + '" value="' + (it.reps != null ? it.reps : '') + '" placeholder="到 ' + ex.hi + ' 算摸顶"></label>' +
+          '</div></div>';
       });
       html += '<div style="margin-top:10px"><div class="small muted" style="margin-bottom:6px">今天整体感觉</div><div class="chips auto" data-chipgroup="feel:feel">' +
         C.FEEL.map(function (f) { return '<button type="button" class="chip sm ' + (d.training.feel === f ? 'on' : '') + '" data-act="pick" data-kind="feel" data-qid="feel" data-val="' + f + '">' + f + '</button>'; }).join('') +
@@ -602,7 +601,7 @@
       '<div class="field-row three" style="margin-top:8px"><label class="field"><span>次数下限</span><input id="fLo" type="number" step="1" value="' + ex.lo + '"></label>' +
       '<label class="field"><span>次数上限</span><input id="fHi" type="number" step="1" value="' + ex.hi + '"></label>' +
       '<label class="field"><span>步进</span><input id="fInc" type="number" step="0.5" value="' + ex.inc + '"></label></div>' +
-      '<div class="tiny muted" style="margin-top:8px">摸满 ' + ex.hi + ' 次 → 下次 ' + r.weightText + ' + ' + ex.inc + 'kg；太重则回退一档。</div>' +
+      '<div class="tiny muted" style="margin-top:8px">最后一组摸到 ' + ex.hi + ' 次 → 下次 ' + r.weightText + ' + ' + ex.inc + 'kg；太重则回退一档。</div>' +
       '<div class="spacer"></div><div class="field-row"><button class="btn primary" data-act="adjust-save" data-ex="' + exId + '">保存</button>' +
       '<button class="btn ghost" data-act="adjust-reset" data-ex="' + exId + '">恢复默认基线</button></div>');
   }
@@ -743,7 +742,7 @@
       '<label class="field"><span>减载系数</span><input type="number" step="0.05" data-path="rules.deloadFactor" value="' + rl.deloadFactor + '"></label></div>' +
       '<div class="field-row" style="margin-top:8px"><label class="field"><span>停滞判定（连续 N 次未摸顶）</span><input type="number" step="1" data-path="rules.stallSessions" value="' + rl.stallSessions + '"></label>' +
       '<label class="field"><span>失败回退倍数（×步进）</span><input type="number" step="0.5" data-path="rules.backoff" value="' + rl.backoff + '"></label></div>' +
-      '<div class="small muted" style="margin-top:8px">当前：完成 → 重量不变；全组摸 hi → +步进；太重 → 回退。减载周不改基线。</div></div></details>';
+      '<div class="small muted" style="margin-top:8px">当前：完成 → 重量不变；最后一组到上限 → +步进；太重 → 回退。减载周不改基线。</div></div></details>';
 
     // 目标
     html += '<details class="block"><summary>目标与警戒线</summary><div class="body"><div class="field-row">' +
@@ -859,7 +858,7 @@
       '<p>· 单次每部位直接组 ≤8，超出是垃圾容量。</p>' +
       '<p>· 组间：主项 2-3 分钟，孤立 1-1.5 分钟，绝不为了省时间砍休息。</p>' +
       '<p>· 递减组只用于孤立动作末组，是时间压缩工具不是强度工具。</p>' +
-      '<p>· 主项永不力竭（摸 hi 也留 2 次余量）；孤立末组可接近力竭。</p>' +
+      '<p>· 主项最后一组也留 1-2 次余量（RPE≤9）；孤立末组可接近力竭。</p>' +
       '<p>· 练前 11:00 加餐（面包+香蕉），14:00 开练，热身含肩袖激活。</p>' +
       '<p>· 膝盖条款：哈克前 2 组徒手慢蹲激活，膝痛则分腿蹲换箭步蹲。</p>' +
       '<p>· 保底机制：一周练不满 4 天时只练三个主项各 3 组，绝不整周零训练。</p></div></details>';
@@ -879,7 +878,7 @@
       '<p>· 应酬 ≤2 次/月，当天其余两餐照常，不补偿性节食。</p>' +
       '<p>· 水 2-2.5L/天，训练日 +500ml；肌酸 3-5g 每天。</p></div></details>';
     html += '<details class="block"><summary>进阶规则（本应用实现）</summary><div class="body small muted">' +
-      '<p>· 全组摸 hi（RPE≤8）→ 下次 +步进，次数回落 lo 重爬。</p>' +
+      '<p>· 最后一组摸到上限（RPE≤9）→ 下次 +步进，次数回落 lo 重爬。</p>' +
       '<p>· 完成未到 hi → 重量不变，继续爬次数。</p>' +
       '<p>· 没完成-太重 → 自动回退一档（×回退倍数）。</p>' +
       '<p>· 自重动作摸顶 → 自动转为负重（+步进 kg）；负重太重 → 退回自重。</p>' +
