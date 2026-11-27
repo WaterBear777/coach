@@ -1,4 +1,4 @@
-/* 自然健体 · 电子教练 — 核心逻辑层（纯函数，无 DOM 依赖）
+﻿/* 自然健体 · 电子教练 — 核心逻辑层（纯函数，无 DOM 依赖）
  * 规则：纯双进阶 / 自重进阶 / 联动组 / 手动或按需减载 / 停滞检测 / e1RM / 窗口化告警
  * 在 Node 中可 require，浏览器中挂到 window.Coach
  */
@@ -7,8 +7,8 @@
 
   /* ---------- 常量 ---------- */
   var RESULT = {
-    hit:   { id: 'hit',   label: '全组摸 hi（RPE≤8）', short: '摸顶', tone: 'ok' },
-    done:  { id: 'done',  label: '完成（未到 hi）',     short: '完成', tone: 'mid' },
+    hit:   { id: 'hit',   label: '最后一组到上限（RPE≤9）', short: '摸顶', tone: 'ok' },
+    done:  { id: 'done',  label: '完成（未到上限）',     short: '完成', tone: 'mid' },
     heavy: { id: 'heavy', label: '没完成-太重',         short: '太重', tone: 'bad' },
     sets:  { id: 'sets',  label: '没完成-组数做完',     short: '组数', tone: 'bad' },
     body:  { id: 'body',  label: '没完成-身体不适',     short: '不适', tone: 'warn' }
