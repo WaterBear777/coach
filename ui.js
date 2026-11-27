@@ -454,7 +454,8 @@
     } else if (kind === 'training') {
       var exs = day ? C.planExercises(S.cfg, day.id) : [];
       html += '<div class="wrap" style="margin-bottom:6px"><button class="btn sm ghost" data-act="fill-all" data-val="done">全部完成（未到hi）</button>' +
-        '<button class="btn sm ghost" data-act="clear-all">清空</button><span class="badge line" id="trCount">0/' + exs.length + '</span></div>';
+        '<button class="btn sm ghost" data-act="clear-all">清空</button><span class="badge line" id="trCount">0/' + exs.length + '</span>' +
+        '<span class="tiny muted">最后一组到上限（RPE≤9）即摸顶</span></div>';
       exs.forEach(function (ex) {
         var it = d.training.items[ex.id] || (d.training.items[ex.id] = { result: null, w: null, reps: null });
         var r = C.rx(S.cfg, S.db, ex, date);
